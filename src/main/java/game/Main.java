@@ -36,7 +36,7 @@ public class Main extends GameApplication {
     public Entity wolf2;
     public Entity wolf3;
     public Entity wolf4;
-
+    public Factory factory = new Factory();
     public SheepMoveComponent sheepMove;
     public Entity sheep;
 
@@ -62,8 +62,7 @@ public class Main extends GameApplication {
 
     @Override
     protected void initGame() {
-        getGameWorld().addEntityFactory(new Factory());
-        sheep = spawn("S", 50, 400);
+        getGameWorld().addEntityFactory(factory);
         setGame();
     }
 
@@ -72,7 +71,7 @@ public class Main extends GameApplication {
         getInput().addAction(new UserAction("Up Right") {
             @Override
             protected void onAction() {
-                if (!sheep.getComponent(AStarMoveComponent.class).isMoving() && isWolfMoving() && canSheepMoveInThatDirection(1)){
+                if (!sheep.getComponent(AStarMoveComponent.class).isMoving() && isWolfMoving() && canSheepMoveInThatDirection(1)) {
                     sheepMove.moveUPDRight();
 
                 }
@@ -104,13 +103,24 @@ public class Main extends GameApplication {
 
             }
         }, KeyCode.S);
+        getInput().addAction(new UserAction("Reset") {
+            @Override
+            protected void onAction() {
+                resetGame();
+            }
+        }, KeyCode.O);
+    }
+
+    public void resetGame() {
+        getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
+        setGame();
     }
 
     // по диагонила вверх 1 - вправо 2 - влево
 //              вниз  3 - вправо 4 - влево
     public boolean canSheepMoveInThatDirection(int direction) {
-        int y = (int) sheepCoordinate.getFirst();
-        int x = (int) sheepCoordinate.getSecond();
+        int y = SHEEP.getY();
+        int x = SHEEP.getX();
         switch (direction) {
             case 1 -> {
                 return array[y - 1][x + 1].equals("1");
@@ -137,14 +147,16 @@ public class Main extends GameApplication {
 
     public void setGame() {
         spawn("BG");
-        String[][] ar;
-        ar = lvlSet.drawRandom();
 
+        sheep = spawn("S", 50, 400);
+        SHEEP.setCoordinate(new Pair<>(8, 1));
+        for (int i = 0; i < 10; i++) System.arraycopy(arr[i], 0,array[i] , 0, 10);
+        System.out.println(arr[1][2]);
         int cellX = 0;
         int cellY = 0;
         for (int i = 0; i < FIELD_SIZE; i++) {
             for (int j = 0; j < FIELD_SIZE; j++) {
-                switch (ar[i][j]) {
+                switch (array[i][j]) {
                     //   case "0" -> spawn("WC", cellX, cellY);
 
                     //   case "1" -> spawn("BC", cellX, cellY);
@@ -153,21 +165,25 @@ public class Main extends GameApplication {
 
                     case "W1" -> {
                         //      spawn("BC", cellX, cellY);
+                        WOLF1.setCoordinate(new Pair<>(1, 2));
                         wolf1 = spawn("W1", cellX, cellY);
                         wolfMove1 = wolf1.getComponent(WolfMoveComponent.class);
                     }
                     case "W2" -> {
                         //    spawn("BC", cellX, cellY);
+                        WOLF2.setCoordinate(new Pair<>(1, 4));
                         wolf2 = spawn("W2", cellX, cellY);
                         wolfMove2 = wolf2.getComponent(WolfMoveComponent.class);
                     }
                     case "W3" -> {
                         //        spawn("BC", cellX, cellY);
+                        WOLF3.setCoordinate(new Pair<>(1, 6));
                         wolf3 = spawn("W3", cellX, cellY);
                         wolfMove3 = wolf3.getComponent(WolfMoveComponent.class);
                     }
                     case "W4" -> {
                         //        spawn("BC", cellX, cellY);
+                        WOLF4.setCoordinate(new Pair<>(1, 8));
                         wolf4 = spawn("W4", cellX, cellY);
                         wolfMove4 = wolf4.getComponent(WolfMoveComponent.class);
                     }

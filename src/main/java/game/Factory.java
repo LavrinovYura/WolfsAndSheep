@@ -42,24 +42,6 @@ public class Factory implements EntityFactory {
                 .viewWithBBox(texture(WALL_TEXTURE, CELL_SIZE, CELL_SIZE))
                 .build();
     }
-    @Spawns("BC")
-    public Entity blackCell(SpawnData data) {
-
-        return FXGL.entityBuilder(data)
-                .type(BLACK)
-                .with(new CollidableComponent(true))
-                .viewWithBBox(texture(BLACK_CELL, CELL_SIZE, CELL_SIZE))
-                .build();
-    }
-    @Spawns("WC")
-    public Entity whiteCell(SpawnData data) {
-
-        return FXGL.entityBuilder(data)
-                .type(WHITE)
-                .with(new CollidableComponent(true))
-                .viewWithBBox(texture(WHITE_CELL, CELL_SIZE, CELL_SIZE))
-                .build();
-    }
 
     @Spawns("S")
     public Entity newSheep(SpawnData data) {
