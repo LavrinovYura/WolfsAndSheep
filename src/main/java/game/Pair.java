@@ -27,5 +27,9 @@ public class Pair<T, U> {
     public void setSecond(U second){
         this.second = second;
     }
+
+    public Pair<Integer, Integer> addTo(Pair<Integer,Integer> pair){
+        return new Pair<>((int) this.getFirst() + pair.getFirst(),(int)this.getSecond() + pair.getSecond());
+    }
 }
 

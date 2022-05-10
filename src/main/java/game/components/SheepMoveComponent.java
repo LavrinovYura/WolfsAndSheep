@@ -1,18 +1,15 @@
 package game.components;
 
-import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
 import game.Pair;
 
 import static com.almasb.fxgl.dsl.FXGL.getGameWorld;
-import static game.FieldParameters.*;
 import static game.Type.*;
 import static game.components.GlobalVars.turn;
-import static game.components.GlobalVars.array;
 
 public class SheepMoveComponent extends Component {
-    private WolfAlgorithm wolfAlgorithm = new WolfAlgorithm();
+
     private static AStarMoveComponent astar;
 
     //private static final Entity component = getGameWorld().getSingleton(SHEEP);
@@ -25,10 +22,7 @@ public class SheepMoveComponent extends Component {
                     (int) (getGameWorld().getSingleton(SHEEP).getX() / 50 + 1),
                     (int) (getGameWorld().getSingleton(SHEEP).getY() / 50 + 1));
         }
-        array[SHEEP.getY()][SHEEP.getX()] = "1";
-        array[SHEEP.getY() + 1][SHEEP.getX() + 1] = "S";
         SHEEP.setCoordinate(new Pair<>(SHEEP.getY() + 1, SHEEP.getX() + 1));
-        wolfAlgorithm.wolfMove();
     }
 
     public void moveDWLeft() {
@@ -38,10 +32,8 @@ public class SheepMoveComponent extends Component {
                     (int) (getGameWorld().getSingleton(SHEEP).getX() / 50 - 1),
                     (int) (getGameWorld().getSingleton(SHEEP).getY() / 50 + 1));
         }
-        array[SHEEP.getY()][SHEEP.getX()] = "1";
-        array[SHEEP.getY() + 1][SHEEP.getX() - 1] = "S";
         SHEEP.setCoordinate(new Pair<>(SHEEP.getY() + 1, SHEEP.getX() - 1));
-        wolfAlgorithm.wolfMove();
+
     }
 
     public void moveUPDRight() {
@@ -51,10 +43,7 @@ public class SheepMoveComponent extends Component {
                     (int) (getGameWorld().getSingleton(SHEEP).getX() / 50 + 1),
                     (int) (getGameWorld().getSingleton(SHEEP).getY() / 50 - 1));
         }
-        array[SHEEP.getY()][SHEEP.getX()] = "1";
-        array[SHEEP.getY() - 1][SHEEP.getX() + 1] = "S";
         SHEEP.setCoordinate(new Pair<>(SHEEP.getY() - 1, SHEEP.getX() + 1));
-        wolfAlgorithm.wolfMove();
     }
 
     public void moveUPDLeft() {
@@ -64,9 +53,6 @@ public class SheepMoveComponent extends Component {
                     (int) (getGameWorld().getSingleton(SHEEP).getX() / 50 - 1),
                     (int) (getGameWorld().getSingleton(SHEEP).getY() / 50 - 1));
         }
-        array[SHEEP.getY()][SHEEP.getX()] = "1";
-        array[SHEEP.getY() - 1][SHEEP.getX() - 1] = "S";
         SHEEP.setCoordinate(new Pair<>(SHEEP.getY() - 1, SHEEP.getX() - 1));
-        wolfAlgorithm.wolfMove();
     }
 }

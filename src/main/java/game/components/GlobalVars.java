@@ -3,19 +3,19 @@ package game.components;
 import game.Pair;
 
 public class GlobalVars {
-    public static Boolean turn = false; //false = sheep move
-
-    public static  String[][] arr = {
-            {"WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA",},
-            {"WA", "O", "W1", "0", "W2", "0", "W3", "0", "W4", "WA",},
-            {"WA", "1", "0", "1", "0", "1", "0", "1", "0", "WA",},
-            {"WA", "0", "1", "0", "1", "0", "1", "0", "1", "WA",},
-            {"WA", "1", "0", "1", "0", "1", "0", "1", "0", "WA",},
-            {"WA", "0", "1", "0", "1", "0", "1", "0", "1", "WA",},
-            {"WA", "1", "0", "1", "0", "1", "0", "1", "0", "WA",},
-            {"WA", "0", "1", "0", "1", "0", "1", "0", "1", "WA",},
-            {"WA", "1", "0", "1", "0", "1", "0", "1", "0", "WA",},
-            {"WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA", "WA",}
+    public static Boolean turn = true; //false = sheep move
+    public static int MAX_VALUE = 255;
+    public static int MIN_VALUE = 0;
+    public static int[][] arr = {
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 0, 0,}
     };
-    public static String[][] array = new String[10][10];
+
+    public static int[][] array = new int[8][8];
 }
