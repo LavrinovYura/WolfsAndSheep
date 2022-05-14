@@ -2,148 +2,155 @@ package game;
 
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
-import com.almasb.fxgl.app.scene.FXGLMenu;
-import com.almasb.fxgl.app.scene.SceneFactory;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.input.UserAction;
-import com.almasb.fxgl.pathfinding.CellState;
-import com.almasb.fxgl.pathfinding.astar.AStarGrid;
-import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
 import game.components.Algorithm;
-import game.components.SheepMoveComponent;
-import game.components.WolfMoveComponent;
-import javafx.scene.input.KeyCode;
-import org.jetbrains.annotations.NotNull;
+import javafx.collections.FXCollections;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
-import java.util.Arrays;
+import java.util.*;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
-import static game.FieldParameters.*;
 import static game.Type.*;
 import static game.components.GlobalVars.*;
 
 public class Main extends GameApplication {
 
-
     public Algorithm algorithm = new Algorithm();
-
-    public WolfMoveComponent wolfMove1;
-    public WolfMoveComponent wolfMove2;
-    public WolfMoveComponent wolfMove3;
-    public WolfMoveComponent wolfMove4;
     public Entity wolf1;
     public Entity wolf2;
     public Entity wolf3;
     public Entity wolf4;
     public Factory factory = new Factory();
-    public SheepMoveComponent sheepMove;
     public Entity sheep;
-
-    public static AStarGrid grid;
+    public boolean gameInit;
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(500);
+        settings.setWidth(750);
         settings.setHeight(500);
         settings.setTitle("Basic Game App");
         settings.setVersion("0.1");
-        settings.setManualResizeEnabled(true);
-        settings.setMainMenuEnabled(true);
-        settings.setGameMenuEnabled(true);
-        settings.setSceneFactory(new SceneFactory() {
-            @NotNull
-            @Override
-            public FXGLMenu newMainMenu() {
-                return new MenuMine();
-            }
-        });
     }
 
     @Override
     protected void initGame() {
+
         getGameWorld().addEntityFactory(factory);
         setGame();
     }
 
     @Override
     protected void initInput() {
-        getInput().addAction(new UserAction("Up Right") {
+        Input input = FXGL.getInput();
+
+        UserAction hitBall = new UserAction("Move Sheep") {
+            Pair<Integer, Integer> lastCoordinate;
+            boolean ifCatch;
+            Type curEntity;
+
             @Override
-            protected void onAction() {
-                if (turn && isWolfMoving()) {
-                    for (Type entity : Type.values()) {
-                        System.out.print(entity.getName() + " " + entity.getY() + "." + entity.getX() + " ");
+            protected void onActionBegin() {
+                if (gameInit) {
+                    curEntity = findWolfByCoordinate((int) input.getMouseYWorld() / 50 - 1, (int) input.getMouseXWorld() / 50 - 1);
+                    if (curEntity != null) {
+                        if (curEntity.getX() == (int) input.getMouseXWorld() / 50 - 1 && curEntity.getY() == (int) input.getMouseYWorld() / 50 - 1) {
+                            lastCoordinate = new Pair<>((int) getGameWorld().getSingleton(curEntity).getY(), (int) getGameWorld().getSingleton(curEntity).getX());
+                            getGameWorld().getSingleton(curEntity).setAnchoredPosition(getInput().getMousePositionWorld());
+                            ifCatch = true;
+                        }
                     }
-                    System.out.println("\n");
-                    sheepMove.moveUPDRight();
-                    turn = false;
-                    algorithm.minMax(2, 0, -500, +500);
-                    for (Type entity : Type.values()) {
-                        System.out.print(entity.getName() + " " + entity.getY() + "." + entity.getX() + " ");
-                    }
-                    System.out.println("\n");
-                    for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-                    System.out.println("\n");
-
                 }
             }
-        }, KeyCode.E);
 
-        getInput().addAction(new UserAction("UP Left") {
             @Override
             protected void onAction() {
-                if (turn && isWolfMoving()) {
-                    sheepMove.moveUPDLeft();
-                    turn = false;
-                    algorithm.minMax(2, 0, -500, +500);
-                    for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-                    System.out.println("\n");
-
+                if (ifCatch) {
+                    getGameWorld().getSingleton(curEntity).setAnchoredPosition(getInput().getMousePositionWorld());
                 }
             }
-        }, KeyCode.W);
 
-        getInput().addAction(new UserAction("Down Right") {
             @Override
-            protected void onAction() {
-                if (turn) {
-                    turn = false;
-                    algorithm.minMax(2, 0, -500, +500);
-                    algorithm.prepareField();
-                    for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-                    System.out.println("\n");
-                 // for (Type entity : Type.values()) {
-                 //     System.out.print(entity.getName() + " " + entity.getY() + "." + entity.getX() + " " + "\n");
-                 // }
+            protected void onActionEnd() {
+                if (ifCatch && PLAYER_TYPE == 1) {
+                    if (!canSheepStandInThatCell((int) (sheep.getX() / 50) - 1, (int) (sheep.getY() / 50) - 1,
+                            SHEEP.getX(), SHEEP.getY(), lastCoordinate)) {
+                        getGameWorld().getSingleton(SHEEP).setAnchoredPosition(lastCoordinate.getSecond(), lastCoordinate.getFirst());
+                    } else
+                        algorithm.minMax(2, 0, -500, +500);
+
+                } else if (ifCatch && PLAYER_TYPE == 2) {
+                    if (!canWolfStandInThatCell((int) getGameWorld().getSingleton(curEntity).getY() / 50 - 1, (int) getGameWorld().getSingleton(curEntity).getX() / 50 - 1
+                            , curEntity, lastCoordinate)) {
+                        getGameWorld().getSingleton(curEntity).setAnchoredPosition(lastCoordinate.getSecond(), lastCoordinate.getFirst());
+                    } else
+                        algorithm.minMax(1, 0, -500, +500);
+                }
+                if (isGameOver()) {
+                    gameInit = false;
+                    resetGame();
+                }
+                ifCatch = false;
+            }
+        };
+        input.addAction(hitBall, MouseButton.PRIMARY);
+    }
+
+    public boolean canWolfStandInThatCell(int y, int x, Type wolf, Pair<Integer, Integer> lastCoordinates) {
+        if (y - wolf.getY() == 1 && Math.abs(x - wolf.getX()) == 1) {
+            if ((y >= 0 && x >= 0 && y <= 7 && x <= 7)) {
+                if (array[y][x] == 0) {
+                    if (x < wolf.getX())
+                        getGameWorld().getSingleton(wolf).setAnchoredPosition(lastCoordinates.getSecond() - 50, lastCoordinates.getFirst() + 50);
+                    if (x > wolf.getX())
+                        getGameWorld().getSingleton(wolf).setAnchoredPosition(lastCoordinates.getSecond() + 50, lastCoordinates.getFirst() + 50);
+
+                    wolf.setCoordinate(new Pair<>(y, x));
+                    array[y][x] = 0;
+                    return true;
                 }
             }
-        }, KeyCode.D);
-        getInput().addAction(new UserAction("Down Left") {
-            @Override
-            protected void onAction() {
-                if (turn) {
+        }
+        return false;
+    }
 
-                    turn = false;
-                    algorithm.minMax(1, 0, -500, +500);
-                    algorithm.prepareField();
-                    for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-                    System.out.println("\n");
-                  // for (Type entity : Type.values()) {
-                  //     System.out.print(entity.getName() + " " + entity.getY() + "." + entity.getX() + " " + "\n");
-                  // }
-                }
-            }
-        }, KeyCode.S);
-        getInput().addAction(new UserAction("Reset") {
-            @Override
-            protected void onAction() {
-                //resetGame();
-                turn = true;
-            }
-        }, KeyCode.O);
+    public Type findWolfByCoordinate(int y, int x) {
+        if (PLAYER_TYPE == 1) return SHEEP;
+        for (int i = 1; i < 5; i++) {
+            if (Type.values()[i].getY() == y && Type.values()[i].getX() == x) return Type.values()[i];
+        }
+        return null;
+    }
+
+    public boolean isGameOver() {
+        if (SHEEP.getX() == 0 && SHEEP.getY() == 7 && array[6][1] != 0)
+            return true;
+        if (SHEEP.getX() == 0 && SHEEP.getY() < 7)
+            if ((array[SHEEP.getY() + 1][SHEEP.getX() + 1] != 0 && array[SHEEP.getY() - 1][SHEEP.getX() + 1] != 0))
+                return true;
+        if (SHEEP.getY() == 7)
+            if (array[SHEEP.getY() - 1][SHEEP.getX() + 1] != 0 && array[SHEEP.getY() - 1][SHEEP.getX() - 1] != 0)
+                return true;
+        if (SHEEP.getX() == 7)
+            if (array[SHEEP.getY() - 1][SHEEP.getX() - 1] != 0 && array[SHEEP.getY() + 1][SHEEP.getX() - 1] != 0)
+                return true;
+        if (SHEEP.getX() != 0 && SHEEP.getY() != 7 && SHEEP.getX() != 7 && SHEEP.getY() != 0)
+            if (array[SHEEP.getY() - 1][SHEEP.getX() - 1] != 0 && array[SHEEP.getY() + 1][SHEEP.getX() - 1] != 0
+                    && array[SHEEP.getY() - 1][SHEEP.getX() + 1] != 0 && array[SHEEP.getY() + 1][SHEEP.getX() + 1] != 0)
+                return true;
+        int countY = 0;
+        for (int i = 1; i < 5; i++) {
+            if (Type.values()[i].getY() >= SHEEP.getY()) countY++;
+        }
+        return countY == 4;
     }
 
     public void resetGame() {
@@ -151,89 +158,101 @@ public class Main extends GameApplication {
         setGame();
     }
 
-    // по диагонила вверх 1 - вправо 2 - влево
-    //              вниз  3 - вправо 4 - влево
-    public boolean canSheepMoveInThatDirection(int direction) {
-        int y = SHEEP.getY();
-        int x = SHEEP.getX();
-        switch (direction) {
-            case 1 -> {
-                if (y != 0 && x != 7)
-                    return array[y - 1][x + 1] == 0;
-            }
-            case 2 -> {
-                if (y != 0 && x != 0)
-                    return array[y - 1][x - 1] == 0;
-            }
-            case 3 -> {
-                if (y != 7 && x != 7)
-                    return array[y + 1][x + 1] == 0;
-            }
-            case 4 -> {
-                if (y != 7 && x != 0)
-                    return array[y + 1][x - 1] == 0;
+    public boolean canSheepStandInThatCell(int xNew, int yNew, int xLast, int yLast, Pair<Integer, Integer> lastCoordinates) {
+        if (Math.abs(xNew - xLast) == 1 && Math.abs(yNew - yLast) == 1) {
+            if ((xNew >= 0 && yNew >= 0 && xNew <= 7 && yNew <= 7)) {
+
+                if (array[yNew][xNew] == 0) {
+                    if (yLast > yNew && xLast < xNew)
+                        getGameWorld().getSingleton(SHEEP).setAnchoredPosition(lastCoordinates.getSecond() + 50, lastCoordinates.getFirst() - 50);
+                    else if (yLast > yNew && xLast > xNew)
+                        getGameWorld().getSingleton(SHEEP).setAnchoredPosition(lastCoordinates.getSecond() - 50, lastCoordinates.getFirst() - 50);
+                    else if (yLast < yNew && xLast < xNew)
+                        getGameWorld().getSingleton(SHEEP).setAnchoredPosition(lastCoordinates.getSecond() + 50, lastCoordinates.getFirst() + 50);//
+                    else if (yLast < yNew && xLast > xNew)
+                        getGameWorld().getSingleton(SHEEP).setAnchoredPosition(lastCoordinates.getSecond() - 50, lastCoordinates.getFirst() + 50);//
+                    SHEEP.setCoordinate(new Pair<>(yNew, xNew));
+                    array[yLast][xLast] = 0;
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public boolean isWolfMoving() {
-        return !wolf1.getComponent(AStarMoveComponent.class).isMoving()
-                & !wolf2.getComponent(AStarMoveComponent.class).isMoving()
-                & !wolf3.getComponent(AStarMoveComponent.class).isMoving()
-                & !wolf4.getComponent(AStarMoveComponent.class).isMoving();
-    }
-
     public void setGame() {
+        spawn("BGBack");
         spawn("BG");
 
-        sheep = spawn("S", 400, 250);
-        SHEEP.setCoordinate(new Pair<>(7, 1));
-        sheepMove = sheep.getComponent(SheepMoveComponent.class);
+        WOLF1.setCoordinate(new Pair<>(0, 1));
+        wolf1 = spawn("W1", 100, 50);
 
-        WOLF1.setCoordinate(new Pair<>(0, 0));
-        wolf1 = spawn("W1", 50, 100);
-        wolfMove1 = wolf1.getComponent(WolfMoveComponent.class);
+        WOLF2.setCoordinate(new Pair<>(0, 3));
+        wolf2 = spawn("W2", 200, 50);
 
-        WOLF2.setCoordinate(new Pair<>(0, 2));
-        wolf2 = spawn("W2", 50, 200);
-        wolfMove2 = wolf2.getComponent(WolfMoveComponent.class);
+        WOLF3.setCoordinate(new Pair<>(0, 5));
+        wolf3 = spawn("W3", 300, 50);
 
-        WOLF3.setCoordinate(new Pair<>(0, 4));
-        wolf3 = spawn("W3", 50, 300);
-        wolfMove3 = wolf3.getComponent(WolfMoveComponent.class);
+        WOLF4.setCoordinate(new Pair<>(0, 7));
+        wolf4 = spawn("W4", 400, 50);
 
-        WOLF4.setCoordinate(new Pair<>(0, 6));
-        wolf4 = spawn("W4", 50, 400);
-        wolfMove4 = wolf4.getComponent(WolfMoveComponent.class);
+        sheep = spawn("S", 50, 400);
+        SHEEP.setCoordinate(new Pair<>(7, 0));
 
-        int cellX = 0;
-        int cellY = 0;
-
-        for (int i = 0; i < FIELD_SIZE; i++) {
-            for (int j = 0; j < FIELD_SIZE; j++) {
-                if (i == 0 || j == 0 || j == 9 || i == 9) {
-                    spawn("WA", cellX, cellY);
-                }
-                cellX += CELL_SIZE;
-            }
-            cellY += CELL_SIZE;
-            cellX = 0;
-        }
-
-        grid = AStarGrid.fromWorld(getGameWorld(), FIELD_SIZE, FIELD_SIZE, CELL_SIZE, CELL_SIZE, type -> {
-            if (type.equals(WALL))
-                return CellState.NOT_WALKABLE;
-
-            return CellState.WALKABLE;
-        });
-        set("grid", grid);
+        algorithm.prepareField();
     }
 
-    public static void gameOver() {
-        String gameOver = "Sheep Winner!\n\n";
+    @Override
+    protected void initUI() {
+        Map<String, Runnable> setUpPlayer = new LinkedHashMap<>();
+        Map<String, Runnable> setUpDifficulty = new LinkedHashMap<>();
 
-        FXGL.getDialogService().showMessageBox(gameOver, () -> FXGL.getGameController().gotoMainMenu());
+        setUpPlayer.put("Woolf", () -> PLAYER_TYPE = 2);
+        setUpPlayer.put("Sheep", () -> PLAYER_TYPE = 1);
+        setUpDifficulty.put("Easy", () -> DIFFICULTY = 1);
+        setUpDifficulty.put("Medium", () -> DIFFICULTY = 2);
+        setUpDifficulty.put("Hard", () -> DIFFICULTY = 3);
+        setUpDifficulty.put("Incredible", () -> DIFFICULTY = 3.5);
+
+        ChoiceBox<String> cbDialogs = getUIFactoryService().newChoiceBox(FXCollections.observableArrayList(setUpPlayer.keySet()));
+        cbDialogs.getSelectionModel().selectFirst();
+
+        ChoiceBox<String> cbDialogs2 = getUIFactoryService().newChoiceBox(FXCollections.observableArrayList(setUpDifficulty.keySet()));
+        cbDialogs2.getSelectionModel().selectFirst();
+
+        Button btn = getUIFactoryService().newButton("Start");
+        btn.setOnAction(e -> {
+            List<String> dialogType = new ArrayList<>();
+
+            dialogType.add(cbDialogs.getSelectionModel().getSelectedItem());
+            dialogType.add(cbDialogs2.getSelectionModel().getSelectedItem());
+
+            for (String action : dialogType) {
+                if (setUpPlayer.containsKey(action))
+                    setUpPlayer.get(action).run();
+                else if (setUpDifficulty.containsKey(action))
+                    setUpDifficulty.get(action).run();
+                gameInit = true;
+                resetGame();
+            }
+        });
+
+        VBox vbox = new VBox(10);
+        VBox vbox1 = new VBox(10);
+        vbox1.setTranslateX(510);
+        vbox1.setTranslateY(100);
+        vbox1.getChildren().addAll(
+                getUIFactoryService().newText("Choose difficulty", Color.WHITE, 18),
+                cbDialogs2,
+                btn);
+        vbox.setTranslateX(510);
+        vbox.getChildren().addAll(
+                getUIFactoryService().newText("Choose player type", Color.WHITE, 18),
+                cbDialogs
+        );
+
+        getGameScene().addUINode(vbox);
+        getGameScene().addUINode(vbox1);
     }
 
     public static void main(String[] args) {

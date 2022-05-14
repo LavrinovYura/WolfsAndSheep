@@ -1,6 +1,5 @@
 package game.components;
 
-import game.Main;
 import game.Pair;
 import game.Type;
 
@@ -10,7 +9,8 @@ import static game.Type.*;
 import static game.components.GlobalVars.*;
 
 public class Algorithm {
-    public WolfMoveComponent wolfMoveComponent = new WolfMoveComponent();
+
+    public AiMove wolfMoveComponent = new AiMove();
     final Pair<Integer, Integer>[] moves = new Pair[]{
             new Pair<>(+1, -1),
             new Pair<>(+1, +1),
@@ -25,7 +25,7 @@ public class Algorithm {
         if (recursiveLvl == 0) prepareField();
         int test;
 
-        if (recursiveLvl >= 6) {
+        if (recursiveLvl >= 2*DIFFICULTY) {
             int evaluation = getEvaluation();
             prepareField();
             return evaluation;
@@ -39,8 +39,6 @@ public class Algorithm {
 
             Pair<Integer, Integer> curEntityPosition = (curEntity == 0) ? SHEEP.getCoordinate() : wolfs[curEntity - 1].getCoordinate();
             Pair<Integer, Integer> curMove = moves[isWolf ? i % 2 : i % 4];
-           //System.out.println(i%2);
-           //if (isWolf) System.out.println(moves[i % 2].getFirst() + "////" + moves[ i % 2].getSecond());
 
             if (canMove(curEntityPosition.getFirst() + curMove.getFirst(), curEntityPosition.getSecond() + curMove.getSecond())) {
 
@@ -57,7 +55,7 @@ public class Algorithm {
                 else
                     beta = Math.min(beta, test);
 
-                 if (beta < alpha) break;
+                if (beta < alpha) break;
             }
         }
 
@@ -67,16 +65,20 @@ public class Algorithm {
             prepareField();
             return evaluation;
         }
+
         if (recursiveLvl == 0) {
             if (entity == 2) {
-                // System.out.println(wolfs[bestMove / 2].getName() + " " + wolfs[bestMove / 2].getY() + "." + wolfs[bestMove / 2].getX());
+                System.out.println(wolfs[bestMove / 2].getName() + " " + wolfs[bestMove / 2].getY() + "." + wolfs[bestMove / 2].getX());
                 wolfs[bestMove / 2].setCoordinate(wolfs[bestMove / 2].getCoordinate().addTo(moves[bestMove % 2]));
-                // System.out.println(wolfs[bestMove / 2].getName() + " " + wolfs[bestMove / 2].getY() + "." + wolfs[bestMove / 2].getX());
-                // wolfMoveComponent.moveWolf(wolfs[bestMove / 2]);
+                System.out.println(wolfs[bestMove / 2].getName() + " " + wolfs[bestMove / 2].getY() + "." + wolfs[bestMove / 2].getX());
+                prepareField();
+                wolfMoveComponent.moveWolf(wolfs[bestMove / 2]);
+                //System.out.println(wolfs[bestMove / 2]);
 
             } else {
-                // System.out.println(SHEEP.getName() + " " + SHEEP.getX() + "." + SHEEP.getY());
                 SHEEP.setCoordinate(SHEEP.getCoordinate().addTo(moves[bestMove % 4]));
+                prepareField();
+                wolfMoveComponent.moveWolf(SHEEP);
                 //  System.out.println(SHEEP.getName() + " " + SHEEP.getX() + "." + SHEEP.getY());
             }
         }
@@ -102,7 +104,6 @@ public class Algorithm {
         array[SHEEP.getY()][SHEEP.getX()] = 1;
 
         for (Type wolf : wolfs) array[wolf.getY()][wolf.getX()] = 255;
-        // for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
     }
 
     public int getEvaluation() {
@@ -122,21 +123,15 @@ public class Algorithm {
             }
         }
         int min = MAX_VALUE;
-      //  for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-      //  System.out.println("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-        //   System.out.println();
+
         for (int i = 0; i < 4; i++) {
-            if (array[0][i*2] > MIN_VALUE && array[0][i*2] < min)
-                min = array[0][i*2];
+            if (array[0][i * 2 + 1] > MIN_VALUE && array[0][i * 2 + 1] < min)
+                min = array[0][i * 2 + 1];
         }
-        // for (int k = 0; k < 8; k++) System.out.println(Arrays.toString(array[k]));
-        // System.out.println("\n");
         return min - 1;
     }
 
     public boolean canMove(int y, int x) {
-        // System.out.println(curPos.getFirst() + "//" + curPos.getSecond());
-        // System.out.println(move.getFirst() + "//" + move.getSecond());
         if (!(x >= 0 && y >= 0 && x <= 7 && y <= 7)) return false;
 
         return array[y][x] == 0;
